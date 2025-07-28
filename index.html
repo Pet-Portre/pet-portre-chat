@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pet-Portre Canlı Destek</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      display: none;
+      background: #ffffff;
+      font-family: 'Arial', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .wrapper {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+
+    .side-panel {
+      flex: 1.2;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .left-panel {
+      background-image: url('https://i.imgur.com/P9uVoHR.png');
+    }
+
+    .right-panel {
+      background-image: url('https://i.imgur.com/RLDOZpf.png');
+    }
+
+    .center-panel {
+      flex: 1.6;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .quote {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 14px;
+      color: #444;
+      text-align: center;
+      margin-bottom: 16px;
+      max-width: 90%;
+    }
+
+    .chat-box {
+      width: 360px;
+      max-height: 560px;
+      background-color: #f9f9f9;
+      border-radius: 12px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .chat-header {
+      background-color: #4a90e2;
+      color: white;
+      padding: 12px 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .chat-header img.agent {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .chat-header img.logo {
+      height: 46px;
+      margin-right: 4px;
+    }
+
+    .chat-body {
+      padding: 10px;
+      height: 320px;
+      overflow-y: auto;
+      font-size: 16px;
+    }
+
+    .chat-footer {
+      padding: 10px;
+      display: flex;
+      gap: 6px;
+      border-top: 1px solid #ccc;
+    }
+
+    .chat-footer input {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    .chat-footer button {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 14px;
+      cursor: pointer;
+    }
+
+    .typing-indicator {
+      font-style: italic;
+      color: grey;
+      margin-top: 5px;
+    }
+
+    .home-link {
+      margin-bottom: 20px;
+      font-size: 19px;
+      color: #4a90e2;
+      text-decoration: none;
+      border: 2px solid #4a90e2;
+      padding: 10px 22px;
+      border-radius: 30px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .home-link:hover {
+      background-color: #4a90e2;
+      color: white;
+    }
+
+    .customer-message {
+      color: #4a90e2;
+    }
+
+    @media (max-width: 900px) {
+      .left-panel, .right-panel {
+        display: none;
+      }
+
+      .center-panel {
+        flex: 1;
+        justify-content: flex-start;
+        padding: 12px;
+      }
+
+      .quote {
+        margin-top: 12px;
+        font-size: 16px;
+      }
+
+      .home-link {
+        margin-top: 6px;
+        margin-bottom: 16px;
+        padding: 12px 26px;
+        font-size: 18px;
+      }
+
+      .chat-box {
+        width: 100%;
+        border-radius: 16px;
+        font-size: 17px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        max-height: 100%;
+      }
+
+      .chat-header {
+        padding: 16px;
+        flex-shrink: 0;
+      }
+
+      .chat-header img.agent {
+        width: 46px;
+        height: 46px;
+      }
+
+      .chat-header img.logo {
+        height: 54px;
+      }
+
+      .chat-body {
+        font-size: 17px;
+        padding: 14px;
+        overflow-y: auto;
+        flex-grow: 1;
+      }
+
+      .chat-footer {
+        padding: 14px;
+        gap: 8px;
+        flex-shrink: 0;
+        border-top: 1px solid #ccc;
+      }
+
+      .chat-footer input {
+        font-size: 17px;
+        padding: 12px 16px;
+      }
+
+      .chat-footer button {
+        padding: 12px 16px;
+        font-size: 17px;
+      }
+
+      .typing-indicator {
+        font-size: 15px;
+        margin-top: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="side-panel left-panel"></div>
+    <div class="center-panel">
+      <img src="https://i.imgur.com/vEWFUq1.png" alt="Pet-Portre Logo" style="height: 120px; margin-bottom: 12px;" />
+      <div class="quote">Her hayvan, kalbinizde bir pati izi bırakır.</div>
+      <a class="home-link" href="https://www.pet-portre.com" target="_blank" rel="noopener noreferrer">Ana Sayfaya Dön</a>
+
+      <div class="chat-box" id="chatContainer" style="display: none;">
+        <div class="chat-header">
+          <div class="chat-header-left">
+            <img class="agent" id="agentImage" src="" alt="Agent" />
+            <span><span id="agentName"></span> – Canlı Destek</span>
+          </div>
+          <img class="logo" src="https://i.imgur.com/up4h6Nl.png" alt="Pet-Portre Logo" />
+        </div>
+        <div class="chat-body" id="chatBody">
+          <div id="chatMessages"></div>
+          <div class="typing-indicator" id="typingIndicator" style="display:none;"></div>
+        </div>
+        <div class="chat-footer">
+          <input type="text" id="chatInput" placeholder="Mesajınızı yazın..." onkeypress="handleKeyPress(event)" />
+          <button onclick="sendMessage()">Gönder</button>
+        </div>
+      </div>
+    </div>
+    <div class="side-panel right-panel"></div>
+  </div>
+
+  <script>
+    if (window.self === window.top) {
+      const SIX_HOURS = 21600000;
+      const now = Date.now();
+      const stored = JSON.parse(localStorage.getItem("chatState")) || {};
+
+      document.body.style.display = "block";
+      document.getElementById("chatContainer").style.display = "flex";
+
+      const agents = [
+        { name: "Burcu", img: "https://i.imgur.com/zu5KXKC.png", greeting: "Merhaba, ben Burcu. Size ve patili dostunuza yardımcı olmak için buradayım 🐾" },
+        { name: "Nazlı", img: "https://i.imgur.com/cnRERNz.png", greeting: "Selam! Ben Nazlı. Pet-Portre’de size yardımcı olmak için buradayım 🐾" },
+        { name: "Gökay", img: "https://i.imgur.com/rHPUTTj.png", greeting: "Selam! Ben Gökay. Pet-Portre’de size yardımcı olmak için buradayım 🐶" },
+        { name: "Emre", img: "https://i.imgur.com/nnhc0Up.png", greeting: "Merhaba, ben Emre. Size yardımcı olmak için buradayım 🐾" },
+        { name: "Tuncay", img: "https://i.imgur.com/qU5SlbX.png", greeting: "Selam! Ben Tuncay. Pet-Portre’de size yardımcı olmak için buradayım 🐈" },
+        { name: "Asya", img: "https://i.imgur.com/vkEPKRM.png", greeting: "Merhaba, ben Asya. Size ve patili dostunuza yardımcı olmak için buradayım 🐶" },
+        { name: "Defne", img: "https://i.imgur.com/UUoakKt.png", greeting: "Selam! Ben Defne. Pet-Portre’de size yardımcı olmak için buradayım 🐶✨" },
+        { name: "Erdem", img: "https://i.imgur.com/Fnd0y6L.png", greeting: "Selam, ben Erdem. Size yardımcı olmak için buradayım. Rahatça sorunuzu yazabilirsiniz 🐾" },
+        { name: "Polat", img: "https://i.imgur.com/Sp8it5i.png", greeting: "Merhaba, ben Polat. Size yardımcı olmaktan memnuniyet duyarım 🐾" },
+        { name: "Mert", img: "https://i.imgur.com/ohkwJIW.png", greeting: "Merhaba, ben Mert. Size ve tatlı dostunuz için yardımcı olmaktan memnuniyet duyarım 🐶" }
+      ];
+
+      let selectedAgent;
+      if (stored.timestamp && now - stored.timestamp < SIX_HOURS) {
+        selectedAgent = stored.agent;
+        document.getElementById("chatMessages").innerHTML = stored.messages || "";
+      } else {
+        selectedAgent = agents[Math.floor(Math.random() * agents.length)];
+        localStorage.setItem("chatState", JSON.stringify({
+          agent: selectedAgent,
+          messages: `<div><strong>${selectedAgent.name}:</strong> ${selectedAgent.greeting}</div>`,
+          timestamp: now
+        }));
+        document.getElementById("chatMessages").innerHTML = `<div><strong>${selectedAgent.name}:</strong> ${selectedAgent.greeting}</div>`;
+      }
+
+      document.getElementById("agentImage").src = selectedAgent.img;
+      document.getElementById("agentName").innerText = selectedAgent.name;
+
+      window.handleKeyPress = function (event) {
+        if (event.key === "Enter") sendMessage();
+      };
+
+      window.sendMessage = function () {
+        const input = document.getElementById("chatInput");
+        const message = input.value.trim();
+        if (message === "") return;
+
+        const messagesEl = document.getElementById("chatMessages");
+        messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
+        input.value = "";
+
+        const typing = document.getElementById("typingIndicator");
+        const chatBody = document.getElementById("chatBody");
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        const delayBeforeTyping = Math.floor(Math.random() * 3000) + 4000;
+        const typingDuration = Math.floor(Math.random() * 4000) + 5000;
+
+        setTimeout(() => {
+          typing.innerText = selectedAgent.name + " yazıyor...";
+          typing.style.display = "block";
+          chatBody.scrollTop = chatBody.scrollHeight;
+
+          setTimeout(() => {
+            typing.style.display = "none";
+            const reply = `<div><strong>${selectedAgent.name}:</strong> Harika bir seçim yapmanıza yardımcı olabilirim! 🐾</div>`;
+            messagesEl.innerHTML += reply;
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            localStorage.setItem("chatState", JSON.stringify({
+              agent: selectedAgent,
+              messages: messagesEl.innerHTML,
+              timestamp: Date.now()
+            }));
+          }, typingDuration);
+        }, delayBeforeTyping);
+      };
+    }
+  </script>
+</body>
+</html>
+
+
