@@ -85,160 +85,147 @@
     <div class="side-panel right-panel"></div>
   </div>
 
-<script>
-if (window.self === window.top) {
-  const backendURL = "https://pet-portre-chat-backend.vercel.app";
-  const SIX_HOURS = 21600000;
+  <script>
+    if (window.self === window.top) {
+      const backendURL = "https://pet-portre-chat-backend.vercel.app";
+      const SIX_HOURS = 21600000;
 
-  function getSessionId() {
-    return localStorage.getItem("chatSessionId") || null;
-  }
-
-  function setSessionId(id) {
-    localStorage.setItem("chatSessionId", id);
-  }
-
-  function saveChatState(agent, messagesHTML) {
-    localStorage.setItem("chatState", JSON.stringify({
-      agent,
-      messages: messagesHTML,
-      timestamp: Date.now()
-    }));
-  }
-
-  function clearChatState() {
-    localStorage.removeItem("chatState");
-    localStorage.removeItem("chatSessionId");
-    document.getElementById("chatMessages").innerHTML = "";
-  }
-
-  function scrollToBottom() {
-    const chatBody = document.getElementById("chatBody");
-    chatBody.scrollTop = chatBody.scrollHeight;
-  }
-
-  function loadAgentImage(newSrc) {
-    const imgEl = document.getElementById("agentImage");
-    imgEl.style.opacity = 0;
-    imgEl.onload = () => imgEl.style.opacity = 1;
-    imgEl.src = newSrc;
-  }
-
-  window.handleKeyPress = function (event) {
-    if (event.key === "Enter") sendMessage();
-  };
-
-  function sendMessage() {
-    const input = document.getElementById("chatInput");
-    const message = input.value.trim();
-    if (!message) return;
-
-    const messagesEl = document.getElementById("chatMessages");
-    messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
-    input.value = "";
-    scrollToBottom();
-
-    let sessionId = getSessionId();
-    if (!sessionId) {
-      sessionId = Math.random().toString(36).substring(7);
-      setSessionId(sessionId);
-    }
-
-    const typing = document.getElementById("typingIndicator");
-    typing.style.display = "none";
-
-    fetch(`${backendURL}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, message })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.sessionId && data.sessionId !== sessionId) {
-        setSessionId(data.sessionId);
-        sessionId = data.sessionId;
+      function getSessionId() {
+        return localStorage.getItem("chatSessionId") || null;
       }
 
-      document.getElementById("agentName").innerText = data.agent.name;
-      loadAgentImage(data.agent.img);
-
-      if (data.isOpen === false) {
-        document.getElementById("chatFooter").innerHTML =
-          `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
-        saveChatState(data.agent, messagesEl.innerHTML);
-        typing.style.display = "none";
-        return;
+      function setSessionId(id) {
+        localStorage.setItem("chatSessionId", id);
       }
 
-      setTimeout(() => {
-        typing.innerText = `${data.agent.name} yazıyor...`;
-        typing.style.display = "block";
+      function saveChatState(agent, messagesHTML) {
+        localStorage.setItem("chatState", JSON.stringify({
+          agent,
+          messages: messagesHTML,
+          timestamp: Date.now()
+        }));
+      }
+
+      function scrollToBottom() {
+        const chatBody = document.getElementById("chatBody");
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }
+
+      window.handleKeyPress = function (event) {
+        if (event.key === "Enter") sendMessage();
+      };
+
+      function sendMessage() {
+        const input = document.getElementById("chatInput");
+        const message = input.value.trim();
+        if (!message) return;
+
+        const messagesEl = document.getElementById("chatMessages");
+        messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
+        input.value = "";
         scrollToBottom();
 
-        setTimeout(() => {
+        let sessionId = getSessionId();
+        if (!sessionId) {
+          sessionId = Math.random().toString(36).substring(7);
+          setSessionId(sessionId);
+        }
+
+        const typing = document.getElementById("typingIndicator");
+        typing.style.display = "none";
+
+        fetch(`${backendURL}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, message })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.sessionId && data.sessionId !== sessionId) {
+            setSessionId(data.sessionId);
+            sessionId = data.sessionId;
+          }
+
+          document.getElementById("agentName").innerText = data.agent.name;
+          document.getElementById("agentImage").src = data.agent.img;
+
+          if (data.isOpen === false) {
+            document.getElementById("chatFooter").innerHTML =
+              `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
+            saveChatState(data.agent, messagesEl.innerHTML);
+            typing.style.display = "none";
+            return;
+          }
+
+          setTimeout(() => {
+            typing.innerText = `${data.agent.name} yazıyor...`;
+            typing.style.display = "block";
+            scrollToBottom();
+
+            setTimeout(() => {
+              typing.style.display = "none";
+              messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
+              scrollToBottom();
+              saveChatState(data.agent, messagesEl.innerHTML);
+            }, data.delay.typingTime);
+          }, data.delay.beforeTyping);
+        })
+        .catch(err => {
+          console.error("Chat backend error:", err);
           typing.style.display = "none";
-          messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
+          messagesEl.innerHTML += `<div><strong>Sistem:</strong> Şu anda yanıt verilemiyor.</div>`;
+        });
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        document.body.style.display = "block";
+        document.getElementById("chatContainer").style.display = "flex";
+
+        const stored = JSON.parse(localStorage.getItem("chatState"));
+        if (stored && Date.now() - stored.timestamp < SIX_HOURS) {
+          document.getElementById("agentName").innerText = stored.agent.name;
+          document.getElementById("agentImage").src = stored.agent.img;
+          document.getElementById("chatMessages").innerHTML = stored.messages;
+          scrollToBottom();
+          return;
+        }
+
+        let sessionId = getSessionId();
+        if (!sessionId) {
+          sessionId = Math.random().toString(36).substring(7);
+          setSessionId(sessionId);
+        }
+
+        fetch(`${backendURL}/init`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.sessionId && data.sessionId !== sessionId) {
+            setSessionId(data.sessionId);
+            sessionId = data.sessionId;
+          }
+
+          document.getElementById("agentName").innerText = data.agent.name;
+          document.getElementById("agentImage").src = data.agent.img;
+
+          if (data.isOpen === false) {
+            document.getElementById("chatFooter").innerHTML =
+              `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
+            saveChatState(data.agent, "");
+            return;
+          }
+
+          const messagesEl = document.getElementById("chatMessages");
+          messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
           scrollToBottom();
           saveChatState(data.agent, messagesEl.innerHTML);
-        }, data.delay.typingTime);
-      }, data.delay.beforeTyping);
-    })
-    .catch(err => {
-      console.error("Chat backend error:", err);
-      typing.style.display = "none";
-      messagesEl.innerHTML += `<div><strong>Sistem:</strong> Şu anda yanıt verilemiyor.</div>`;
-    });
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    document.body.style.display = "block";
-    document.getElementById("chatContainer").style.display = "flex";
-
-    const stored = JSON.parse(localStorage.getItem("chatState"));
-    if (stored && Date.now() - stored.timestamp < SIX_HOURS) {
-      document.getElementById("agentName").innerText = stored.agent.name;
-      loadAgentImage(stored.agent.img);
-      document.getElementById("chatMessages").innerHTML = stored.messages;
-      scrollToBottom();
-      return;
+        })
+        .catch(err => console.error("Init error:", err));
+      });
     }
-
-    let sessionId = getSessionId();
-    if (!sessionId) {
-      sessionId = Math.random().toString(36).substring(7);
-      setSessionId(sessionId);
-    }
-
-    fetch(`${backendURL}/init`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.sessionId && data.sessionId !== sessionId) {
-        setSessionId(data.sessionId);
-        sessionId = data.sessionId;
-      }
-
-      document.getElementById("agentName").innerText = data.agent.name;
-      loadAgentImage(data.agent.img);
-
-      if (data.isOpen === false) {
-        document.getElementById("chatFooter").innerHTML =
-          `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
-        saveChatState(data.agent, "");
-        return;
-      }
-
-      const messagesEl = document.getElementById("chatMessages");
-      messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
-      scrollToBottom();
-      saveChatState(data.agent, messagesEl.innerHTML);
-    })
-    .catch(err => console.error("Init error:", err));
-  });
-}
-</script>
+  </script>
 </body>
 </html>
