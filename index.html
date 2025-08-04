@@ -120,8 +120,7 @@ if (window.self === window.top) {
 
     const sessionId = getSessionId();
     const typing = document.getElementById("typingIndicator");
-    typing.style.display = "block";
-    typing.innerText = "Yazıyor...";
+    typing.style.display = "none"; // hide immediately
 
     fetch(`${backendURL}/chat`, {
       method: "POST",
