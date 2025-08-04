@@ -274,7 +274,7 @@
       const nowDate = new Date();
       const stored = JSON.parse(localStorage.getItem("chatState")) || {};
 
-      // Force time to 22:46 for testing closing soon
+      // Force time for testing closing soon message
       const day = nowDate.getDay();
       const hour = 22;
       const minute = 46;
@@ -341,8 +341,9 @@
         const chatBody = document.getElementById("chatBody");
         chatBody.scrollTop = chatBody.scrollHeight;
 
-        const delayBeforeTyping = 500; 
-        const typingDuration = 500; 
+        // ORIGINAL random delays restored
+        const delayBeforeTyping = Math.floor(Math.random() * 3000) + 4000;
+        const typingDuration = Math.floor(Math.random() * 4000) + 5000;
 
         setTimeout(() => {
           typing.innerText = selectedAgent.name + " yazıyor...";
