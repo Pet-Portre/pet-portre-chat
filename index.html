@@ -24,11 +24,7 @@
     .chat-box { width: 360px; max-height: 560px; background-color: #f9f9f9; border-radius: 12px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; overflow: hidden; margin-top: 20px; }
     .chat-header { background-color: #4a90e2; color: white; padding: 12px 16px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
     .chat-header-left { display: flex; align-items: center; gap: 10px; }
-    .chat-header img.agent {
-      width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
-      transition: opacity 0.5s ease;
-      opacity: 1;
-    }
+    .chat-header img.agent { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
     .chat-header img.logo { height: 46px; margin-right: 4px; }
     .chat-body { padding: 10px; height: 320px; overflow-y: auto; font-size: 16px; }
     .chat-footer { padding: 10px; display: flex; gap: 6px; border-top: 1px solid #ccc; }
@@ -85,147 +81,126 @@
     <div class="side-panel right-panel"></div>
   </div>
 
-  <script>
-    if (window.self === window.top) {
-      const backendURL = "https://pet-portre-chat-backend.vercel.app";
-      const SIX_HOURS = 21600000;
+<script>
+if (window.self === window.top) {
+  const backendURL = "https://pet-portre-chat-backend.vercel.app";
+  const SIX_HOURS = 21600000;
 
-      function getSessionId() {
-        return localStorage.getItem("chatSessionId") || null;
+  function getSessionId() {
+    const storedId = localStorage.getItem("chatSessionId");
+    if (storedId) return storedId;
+    const newId = Math.random().toString(36).substring(7);
+    localStorage.setItem("chatSessionId", newId);
+    return newId;
+  }
+
+  function saveChatState(agent, messagesHTML) {
+    localStorage.setItem("chatState", JSON.stringify({
+      agent,
+      messages: messagesHTML,
+      timestamp: Date.now()
+    }));
+  }
+
+  function scrollToBottom() {
+    const chatBody = document.getElementById("chatBody");
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  window.handleKeyPress = function (event) {
+    if (event.key === "Enter") sendMessage();
+  };
+
+  function sendMessage() {
+    const input = document.getElementById("chatInput");
+    const message = input.value.trim();
+    if (message === "") return;
+
+    const messagesEl = document.getElementById("chatMessages");
+    messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
+    input.value = "";
+    scrollToBottom();
+
+    const sessionId = getSessionId();
+    const typing = document.getElementById("typingIndicator");
+    typing.style.display = "none";
+
+    fetch(`${backendURL}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, message })
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("agentImage").src = data.agent.img;
+      document.getElementById("agentName").innerText = data.agent.name;
+
+      if (data.isOpen === false) {
+        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
+        saveChatState(data.agent, messagesEl.innerHTML);
+        typing.style.display = "none";
+        return;
       }
 
-      function setSessionId(id) {
-        localStorage.setItem("chatSessionId", id);
-      }
-
-      function saveChatState(agent, messagesHTML) {
-        localStorage.setItem("chatState", JSON.stringify({
-          agent,
-          messages: messagesHTML,
-          timestamp: Date.now()
-        }));
-      }
-
-      function scrollToBottom() {
-        const chatBody = document.getElementById("chatBody");
-        chatBody.scrollTop = chatBody.scrollHeight;
-      }
-
-      window.handleKeyPress = function (event) {
-        if (event.key === "Enter") sendMessage();
-      };
-
-      function sendMessage() {
-        const input = document.getElementById("chatInput");
-        const message = input.value.trim();
-        if (!message) return;
-
-        const messagesEl = document.getElementById("chatMessages");
-        messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
-        input.value = "";
+      setTimeout(() => {
+        typing.innerText = data.agent.name + " yazıyor...";
+        typing.style.display = "block";
         scrollToBottom();
 
-        let sessionId = getSessionId();
-        if (!sessionId) {
-          sessionId = Math.random().toString(36).substring(7);
-          setSessionId(sessionId);
-        }
-
-        const typing = document.getElementById("typingIndicator");
-        typing.style.display = "none";
-
-        fetch(`${backendURL}/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, message })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.sessionId && data.sessionId !== sessionId) {
-            setSessionId(data.sessionId);
-            sessionId = data.sessionId;
-          }
-
-          document.getElementById("agentName").innerText = data.agent.name;
-          document.getElementById("agentImage").src = data.agent.img;
-
-          if (data.isOpen === false) {
-            document.getElementById("chatFooter").innerHTML =
-              `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
-            saveChatState(data.agent, messagesEl.innerHTML);
-            typing.style.display = "none";
-            return;
-          }
-
-          setTimeout(() => {
-            typing.innerText = `${data.agent.name} yazıyor...`;
-            typing.style.display = "block";
-            scrollToBottom();
-
-            setTimeout(() => {
-              typing.style.display = "none";
-              messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
-              scrollToBottom();
-              saveChatState(data.agent, messagesEl.innerHTML);
-            }, data.delay.typingTime);
-          }, data.delay.beforeTyping);
-        })
-        .catch(err => {
-          console.error("Chat backend error:", err);
+        setTimeout(() => {
           typing.style.display = "none";
-          messagesEl.innerHTML += `<div><strong>Sistem:</strong> Şu anda yanıt verilemiyor.</div>`;
-        });
-      }
-
-      window.addEventListener("DOMContentLoaded", () => {
-        document.body.style.display = "block";
-        document.getElementById("chatContainer").style.display = "flex";
-
-        const stored = JSON.parse(localStorage.getItem("chatState"));
-        if (stored && Date.now() - stored.timestamp < SIX_HOURS) {
-          document.getElementById("agentName").innerText = stored.agent.name;
-          document.getElementById("agentImage").src = stored.agent.img;
-          document.getElementById("chatMessages").innerHTML = stored.messages;
-          scrollToBottom();
-          return;
-        }
-
-        let sessionId = getSessionId();
-        if (!sessionId) {
-          sessionId = Math.random().toString(36).substring(7);
-          setSessionId(sessionId);
-        }
-
-        fetch(`${backendURL}/init`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.sessionId && data.sessionId !== sessionId) {
-            setSessionId(data.sessionId);
-            sessionId = data.sessionId;
-          }
-
-          document.getElementById("agentName").innerText = data.agent.name;
-          document.getElementById("agentImage").src = data.agent.img;
-
-          if (data.isOpen === false) {
-            document.getElementById("chatFooter").innerHTML =
-              `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
-            saveChatState(data.agent, "");
-            return;
-          }
-
-          const messagesEl = document.getElementById("chatMessages");
-          messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
+          messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
           scrollToBottom();
           saveChatState(data.agent, messagesEl.innerHTML);
-        })
-        .catch(err => console.error("Init error:", err));
-      });
+        }, data.delay.typingTime);
+      }, data.delay.beforeTyping);
+    })
+    .catch(err => {
+      console.error("Chat backend error:", err);
+      typing.style.display = "none";
+      messagesEl.innerHTML += `<div><strong>Sistem:</strong> Şu anda yanıt verilemiyor.</div>`;
+    });
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    document.body.style.display = "block";
+    document.getElementById("chatContainer").style.display = "flex";
+
+    const stored = JSON.parse(localStorage.getItem("chatState"));
+    if (stored && Date.now() - stored.timestamp < SIX_HOURS) {
+      document.getElementById("agentImage").src = stored.agent.img;
+      document.getElementById("agentName").innerText = stored.agent.name;
+      document.getElementById("chatMessages").innerHTML = stored.messages;
+      scrollToBottom();
+      return; // Skip init, we already have memory
     }
-  </script>
+
+    const sessionId = getSessionId();
+    fetch(`${backendURL}/init`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId })
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("agentImage").src = data.agent.img;
+      document.getElementById("agentName").innerText = data.agent.name;
+
+      if (data.isOpen === false) {
+        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
+        saveChatState(data.agent, "");
+        return;
+      }
+
+      const messagesEl = document.getElementById("chatMessages");
+      messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
+      scrollToBottom();
+      saveChatState(data.agent, messagesEl.innerHTML);
+    })
+    .catch(err => console.error("Init error:", err));
+  });
+}
+</script>
 </body>
 </html>
+
