@@ -152,7 +152,6 @@ if (window.self === window.top) {
     .then(res => res.json())
     .then(data => {
       if (data.sessionId) setSessionId(data.sessionId);
-      if (data.reset) clearChatState();
 
       document.getElementById("agentName").innerText = data.agent.name;
       loadAgentImage(data.agent.img);
@@ -198,7 +197,6 @@ if (window.self === window.top) {
       return;
     }
 
-    // First time or expired session
     let sessionId = getSessionId();
     if (!sessionId) {
       sessionId = Math.random().toString(36).substring(7);
@@ -213,7 +211,10 @@ if (window.self === window.top) {
     .then(res => res.json())
     .then(data => {
       if (data.sessionId) setSessionId(data.sessionId);
-      if (data.reset) clearChatState();
+      if (data.reset === true) {
+        console.log("[Chat] Session reset by backend – new agent assigned");
+        clearChatState();
+      }
 
       document.getElementById("agentName").innerText = data.agent.name;
       loadAgentImage(data.agent.img);
