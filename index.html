@@ -151,7 +151,9 @@ if (window.self === window.top) {
     })
     .then(res => res.json())
     .then(data => {
-      if (data.sessionId) setSessionId(data.sessionId);
+      if (data.sessionId && data.sessionId !== getSessionId()) {
+        setSessionId(data.sessionId); // always sync with backend
+      }
 
       document.getElementById("agentName").innerText = data.agent.name;
       loadAgentImage(data.agent.img);
@@ -210,7 +212,10 @@ if (window.self === window.top) {
     })
     .then(res => res.json())
     .then(data => {
-      if (data.sessionId) setSessionId(data.sessionId);
+      if (data.sessionId && data.sessionId !== getSessionId()) {
+        console.log("[Chat] Backend updated sessionId:", data.sessionId);
+        setSessionId(data.sessionId);
+      }
       if (data.reset === true) {
         console.log("[Chat] Session reset by backend – new agent assigned");
         clearChatState();
