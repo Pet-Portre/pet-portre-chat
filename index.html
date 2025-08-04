@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pet-Portre Canlı Destek</title>
 
-  <!-- ✅ Full favicon setup with SVG for Safari, Chrome, iOS -->
+  <!-- ✅ Full favicon setup -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="mask-icon" href="/favicon.svg" color="#4a90e2">
   <link rel="apple-touch-icon" href="/favicon.svg">
@@ -14,15 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      display: none;
-      background: #ffffff;
-      font-family: 'Arial', sans-serif;
-      height: 100vh;
-      overflow: hidden;
-    }
-
+    body { display: none; background: #ffffff; font-family: 'Arial', sans-serif; height: 100vh; overflow: hidden; }
     .wrapper { display: flex; width: 100%; height: 100%; }
     .side-panel { flex: 1.2; background-size: cover; background-position: center; }
     .left-panel { background-image: url('https://i.imgur.com/9PpOW4r.jpeg'); }
@@ -43,7 +35,6 @@
     .home-link { margin-bottom: 20px; font-size: 19px; color: #4a90e2; text-decoration: none; border: 2px solid #4a90e2; padding: 10px 22px; border-radius: 30px; transition: background 0.3s, color 0.3s; }
     .home-link:hover { background-color: #4a90e2; color: white; }
     .customer-message { color: #4a90e2; }
-
     @media (max-width: 900px) {
       .left-panel, .right-panel { display: none; }
       .center-panel { flex: 1; justify-content: flex-start; padding: 12px; }
@@ -93,6 +84,7 @@
 <script>
 if (window.self === window.top) {
   const backendURL = "https://pet-portre-chat-backend.vercel.app";
+  const SIX_HOURS = 21600000;
 
   function getSessionId() {
     const storedId = localStorage.getItem("chatSessionId");
@@ -100,6 +92,14 @@ if (window.self === window.top) {
     const newId = Math.random().toString(36).substring(7);
     localStorage.setItem("chatSessionId", newId);
     return newId;
+  }
+
+  function saveChatState(agent, messagesHTML) {
+    localStorage.setItem("chatState", JSON.stringify({
+      agent,
+      messages: messagesHTML,
+      timestamp: Date.now()
+    }));
   }
 
   window.handleKeyPress = function (event) {
@@ -120,7 +120,7 @@ if (window.self === window.top) {
 
     const sessionId = getSessionId();
     const typing = document.getElementById("typingIndicator");
-    typing.style.display = "none"; // hide immediately
+    typing.style.display = "none";
 
     fetch(`${backendURL}/chat`, {
       method: "POST",
@@ -134,6 +134,7 @@ if (window.self === window.top) {
 
       if (data.isOpen === false) {
         document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
+        saveChatState(data.agent, messagesEl.innerHTML);
         typing.style.display = "none";
         return;
       }
@@ -146,6 +147,7 @@ if (window.self === window.top) {
           typing.style.display = "none";
           messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
           chatBody.scrollTop = chatBody.scrollHeight;
+          saveChatState(data.agent, messagesEl.innerHTML);
         }, data.delay.typingTime);
       }, data.delay.beforeTyping);
     })
@@ -160,6 +162,14 @@ if (window.self === window.top) {
     document.body.style.display = "block";
     document.getElementById("chatContainer").style.display = "flex";
 
+    const stored = JSON.parse(localStorage.getItem("chatState"));
+    if (stored && Date.now() - stored.timestamp < SIX_HOURS) {
+      document.getElementById("agentImage").src = stored.agent.img;
+      document.getElementById("agentName").innerText = stored.agent.name;
+      document.getElementById("chatMessages").innerHTML = stored.messages;
+      return; // Skip init, we already have memory
+    }
+
     const sessionId = getSessionId();
     fetch(`${backendURL}/init`, {
       method: "POST",
@@ -173,11 +183,13 @@ if (window.self === window.top) {
 
       if (data.isOpen === false) {
         document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
+        saveChatState(data.agent, "");
         return;
       }
 
       const messagesEl = document.getElementById("chatMessages");
-      messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
+      messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
+      saveChatState(data.agent, messagesEl.innerHTML);
     })
     .catch(err => console.error("Init error:", err));
   });
