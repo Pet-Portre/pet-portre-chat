@@ -15,238 +15,49 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      display: none;
-      background: #ffffff;
-      font-family: 'Arial', sans-serif;
-      height: 100vh;
-      overflow: hidden;
-    }
+    body { display: none; background: #ffffff; font-family: 'Arial', sans-serif; height: 100vh; overflow: hidden; }
 
-    .wrapper {
-      display: flex;
-      width: 100%;
-      height: 100%;
-    }
+    .wrapper { display: flex; width: 100%; height: 100%; }
+    .side-panel { flex: 1.2; background-size: cover; background-position: center; }
+    .left-panel { background-image: url('https://i.imgur.com/9PpOW4r.jpeg'); }
+    .right-panel { background-image: url('https://i.imgur.com/YHBQc9r.jpeg'); }
 
-    .side-panel {
-      flex: 1.2;
-      background-size: cover;
-      background-position: center;
-    }
+    .center-panel { flex: 1.6; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .quote { font-family: 'Playfair Display', serif; font-style: italic; font-size: 14px; color: #444; text-align: center; margin-bottom: 16px; max-width: 90%; }
 
-    .left-panel {
-      background-image: url('https://i.imgur.com/9PpOW4r.jpeg');
-    }
+    .chat-box { width: 360px; max-height: 560px; background-color: #f9f9f9; border-radius: 12px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; overflow: hidden; margin-top: 20px; }
 
-    .right-panel {
-      background-image: url('https://i.imgur.com/YHBQc9r.jpeg');
-    }
+    .chat-header { background-color: #4a90e2; color: white; padding: 12px 16px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
+    .chat-header-left { display: flex; align-items: center; gap: 10px; }
+    .chat-header img.agent { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
+    .chat-header img.logo { height: 46px; margin-right: 4px; }
 
-    .center-panel {
-      flex: 1.6;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+    .chat-body { padding: 10px; height: 320px; overflow-y: auto; font-size: 16px; }
+    .chat-footer { padding: 10px; display: flex; gap: 6px; border-top: 1px solid #ccc; }
+    .offline-message { padding: 10px; text-align: center; color: #444; font-size: 14px; border-top: 1px solid #ccc; background-color: #f1f1f1; width: 100%; }
 
-    .quote {
-      font-family: 'Playfair Display', serif;
-      font-style: italic;
-      font-size: 14px;
-      color: #444;
-      text-align: center;
-      margin-bottom: 16px;
-      max-width: 90%;
-    }
+    .chat-footer input { flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; font-size: 16px; }
+    .chat-footer button { background-color: #4a90e2; color: white; border: none; border-radius: 20px; padding: 8px 14px; cursor: pointer; }
+    .typing-indicator { font-style: italic; color: grey; margin-top: 5px; }
 
-    .chat-box {
-      width: 360px;
-      max-height: 560px;
-      background-color: #f9f9f9;
-      border-radius: 12px;
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      margin-top: 20px;
-    }
-
-    .chat-header {
-      background-color: #4a90e2;
-      color: white;
-      padding: 12px 16px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .chat-header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .chat-header img.agent {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .chat-header img.logo {
-      height: 46px;
-      margin-right: 4px;
-    }
-
-    .chat-body {
-      padding: 10px;
-      height: 320px;
-      overflow-y: auto;
-      font-size: 16px;
-    }
-
-    .chat-footer {
-      padding: 10px;
-      display: flex;
-      gap: 6px;
-      border-top: 1px solid #ccc;
-    }
-
-    /* Added for offline message styling */
-    .offline-message {
-      padding: 10px;
-      text-align: center;
-      color: #444;
-      font-size: 14px;
-      border-top: 1px solid #ccc;
-      background-color: #f1f1f1;
-      width: 100%;
-    }
-
-    .chat-footer input {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 20px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-
-    .chat-footer button {
-      background-color: #4a90e2;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 8px 14px;
-      cursor: pointer;
-    }
-
-    .typing-indicator {
-      font-style: italic;
-      color: grey;
-      margin-top: 5px;
-    }
-
-    .home-link {
-      margin-bottom: 20px;
-      font-size: 19px;
-      color: #4a90e2;
-      text-decoration: none;
-      border: 2px solid #4a90e2;
-      padding: 10px 22px;
-      border-radius: 30px;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    .home-link:hover {
-      background-color: #4a90e2;
-      color: white;
-    }
-
-    .customer-message {
-      color: #4a90e2;
-    }
+    .home-link { margin-bottom: 20px; font-size: 19px; color: #4a90e2; text-decoration: none; border: 2px solid #4a90e2; padding: 10px 22px; border-radius: 30px; transition: background 0.3s, color 0.3s; }
+    .home-link:hover { background-color: #4a90e2; color: white; }
+    .customer-message { color: #4a90e2; }
 
     @media (max-width: 900px) {
-      .left-panel, .right-panel {
-        display: none;
-      }
-
-      .center-panel {
-        flex: 1;
-        justify-content: flex-start;
-        padding: 12px;
-      }
-
-      .quote {
-        margin-top: 12px;
-        font-size: 16px;
-      }
-
-      .home-link {
-        margin-top: 6px;
-        margin-bottom: 16px;
-        padding: 12px 26px;
-        font-size: 18px;
-      }
-
-      .chat-box {
-        width: 100%;
-        border-radius: 16px;
-        font-size: 17px;
-        flex-shrink: 0;
-        display: flex;
-        flex-direction: column;
-        height: auto;
-        max-height: 100%;
-      }
-
-      .chat-header {
-        padding: 16px;
-        flex-shrink: 0;
-      }
-
-      .chat-header img.agent {
-        width: 46px;
-        height: 46px;
-      }
-
-      .chat-header img.logo {
-        height: 54px;
-      }
-
-      .chat-body {
-        font-size: 17px;
-        padding: 14px;
-        overflow-y: auto;
-        flex-grow: 1;
-      }
-
-      .chat-footer {
-        padding: 14px;
-        gap: 8px;
-        flex-shrink: 0;
-        border-top: 1px solid #ccc;
-      }
-
-      .chat-footer input {
-        font-size: 17px;
-        padding: 12px 16px;
-      }
-
-      .chat-footer button {
-        padding: 12px 16px;
-        font-size: 17px;
-      }
-
-      .typing-indicator {
-        font-size: 15px;
-        margin-top: 8px;
-      }
+      .left-panel, .right-panel { display: none; }
+      .center-panel { flex: 1; justify-content: flex-start; padding: 12px; }
+      .quote { margin-top: 12px; font-size: 16px; }
+      .home-link { margin-top: 6px; margin-bottom: 16px; padding: 12px 26px; font-size: 18px; }
+      .chat-box { width: 100%; border-radius: 16px; font-size: 17px; flex-shrink: 0; display: flex; flex-direction: column; height: auto; max-height: 100%; }
+      .chat-header { padding: 16px; flex-shrink: 0; }
+      .chat-header img.agent { width: 46px; height: 46px; }
+      .chat-header img.logo { height: 54px; }
+      .chat-body { font-size: 17px; padding: 14px; overflow-y: auto; flex-grow: 1; }
+      .chat-footer { padding: 14px; gap: 8px; flex-shrink: 0; border-top: 1px solid #ccc; }
+      .chat-footer input { font-size: 17px; padding: 12px 16px; }
+      .chat-footer button { padding: 12px 16px; font-size: 17px; }
+      .typing-indicator { font-size: 15px; margin-top: 8px; }
     }
   </style>
 </head>
@@ -280,111 +91,96 @@
   </div>
 
   <script>
-    if (window.self === window.top) {
-      const SIX_HOURS = 21600000;
-      const nowDate = new Date();
-      const stored = JSON.parse(localStorage.getItem("chatState")) || {};
+    const backendURL = "https://pet-portre-chat-backend.vercel.app";
 
-      const day = nowDate.getDay();
-      const hour = nowDate.getHours();
-      const minute = nowDate.getMinutes();
+    function getSessionId() {
+      const storedId = localStorage.getItem("chatSessionId");
+      if (storedId) return storedId;
+      const newId = Math.random().toString(36).substring(7);
+      localStorage.setItem("chatSessionId", newId);
+      return newId;
+    }
 
-      // Real working hours logic
-      let isOpen = false;
-      if (day >= 1 && day <= 5) { // Mon-Fri
-        if (hour > 7 && hour < 23) isOpen = true;
-        if (hour === 7 && minute >= 30) isOpen = true;
-      } else { // Sat-Sun
-        if (hour > 9 && hour < 23) isOpen = true;
-        if (hour === 9 && minute >= 0) isOpen = true;
-      }
+    window.handleKeyPress = function (event) {
+      if (event.key === "Enter") sendMessage();
+    };
 
-      document.body.style.display = "block";
-      document.getElementById("chatContainer").style.display = "flex";
+    function sendMessage() {
+      const input = document.getElementById("chatInput");
+      const message = input.value.trim();
+      if (message === "") return;
 
-      const agents = [
-        { name: "Burcu", img: "https://i.imgur.com/zu5KXKC.png", greeting: "Merhaba, ben Burcu. Size ve patili dostunuza yardımcı olmak için buradayım 🐾" },
-        { name: "Nazlı", img: "https://i.imgur.com/cnRERNz.png", greeting: "Selam! Ben Nazlı. Pet-Portre’de size yardımcı olmak için buradayım 🐾" },
-        { name: "Gökay", img: "https://i.imgur.com/rHPUTTj.png", greeting: "Selam! Ben Gökay. Pet-Portre’de size yardımcı olmak için buradayım 🐶" },
-        { name: "Emre", img: "https://i.imgur.com/nnhc0Up.png", greeting: "Merhaba, ben Emre. Size yardımcı olmak için buradayım 🐾" },
-        { name: "Tuncay", img: "https://i.imgur.com/qU5SlbX.png", greeting: "Selam! Ben Tuncay. Pet-Portre’de size yardımcı olmak için buradayım 🐈" },
-        { name: "Asya", img: "https://i.imgur.com/vkEPKRM.png", greeting: "Merhaba, ben Asya. Size ve patili dostunuza yardımcı olmak için buradayım 🐶" },
-        { name: "Defne", img: "https://i.imgur.com/UUoakKt.png", greeting: "Selam! Ben Defne. Pet-Portre’de size yardımcı olmak için buradayım 🐶✨" },
-        { name: "Erdem", img: "https://i.imgur.com/Fnd0y6L.png", greeting: "Selam, ben Erdem. Size yardımcı olmak için buradayım. Rahatça sorunuzu yazabilirsiniz 🐾" },
-        { name: "Polat", img: "https://i.imgur.com/Sp8it5i.png", greeting: "Merhaba, ben Polat. Size yardımcı olmaktan memnuniyet duyarım 🐾" },
-        { name: "Mert", img: "https://i.imgur.com/ohkwJIW.png", greeting: "Merhaba, ben Mert. Size ve tatlı dostunuz için yardımcı olmaktan memnuniyet duyarım 🐶" }
-      ];
+      const messagesEl = document.getElementById("chatMessages");
+      messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
+      input.value = "";
 
-      let selectedAgent;
-      if (stored.timestamp && Date.now() - stored.timestamp < SIX_HOURS) {
-        selectedAgent = stored.agent;
-        document.getElementById("chatMessages").innerHTML = stored.messages || "";
-      } else {
-        selectedAgent = agents[Math.floor(Math.random() * agents.length)];
-        localStorage.setItem("chatState", JSON.stringify({
-          agent: selectedAgent,
-          messages: `<div><strong>${selectedAgent.name}:</strong> ${selectedAgent.greeting}</div>`,
-          timestamp: Date.now()
-        }));
-        document.getElementById("chatMessages").innerHTML = `<div><strong>${selectedAgent.name}:</strong> ${selectedAgent.greeting}</div>`;
-      }
+      const chatBody = document.getElementById("chatBody");
+      chatBody.scrollTop = chatBody.scrollHeight;
 
-      document.getElementById("agentImage").src = selectedAgent.img;
-      document.getElementById("agentName").innerText = selectedAgent.name;
+      const sessionId = getSessionId();
+      const typing = document.getElementById("typingIndicator");
+      typing.style.display = "block";
+      typing.innerText = "Yazıyor...";
 
-      if (!isOpen) {
-        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">
-          Şu anda canlı destek kapalıdır.<br>
-          <strong>Çalışma saatlerimiz:</strong> Pazartesi–Cuma 07:30 – 23:00, Cumartesi–Pazar 09:00 – 23:00
-        </div>`;
-      }
+      fetch(`${backendURL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, message })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("agentImage").src = data.agent.image;
+        document.getElementById("agentName").innerText = data.agent.name;
 
-      let closingSoonAdded = false;
-
-      window.handleKeyPress = function (event) {
-        if (event.key === "Enter") sendMessage();
-      };
-
-      window.sendMessage = function () {
-        const input = document.getElementById("chatInput");
-        const message = input.value.trim();
-        if (message === "") return;
-
-        const messagesEl = document.getElementById("chatMessages");
-        messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
-        input.value = "";
-
-        const typing = document.getElementById("typingIndicator");
-        const chatBody = document.getElementById("chatBody");
-        chatBody.scrollTop = chatBody.scrollHeight;
-
-        const delayBeforeTyping = Math.floor(Math.random() * 3000) + 4000;
-        const typingDuration = Math.floor(Math.random() * 4000) + 5000;
+        // If backend says closed
+        if (data.isOpen === false) {
+          document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
+          return;
+        }
 
         setTimeout(() => {
-          typing.innerText = selectedAgent.name + " yazıyor...";
+          typing.innerText = data.agent.name + " yazıyor...";
           typing.style.display = "block";
-          chatBody.scrollTop = chatBody.scrollHeight;
 
           setTimeout(() => {
             typing.style.display = "none";
-            let reply = `<div><strong>${selectedAgent.name}:</strong> Harika bir seçim yapmanıza yardımcı olabilirim! 🐾</div>`;
-            if (!closingSoonAdded && (hour > 22 || (hour === 22 && minute >= 40))) {
-              reply = reply.replace("</div>", " Bu arada, bilgilendirmek isterim ki canlı desteğimiz saat 23:00’te kapanacaktır.</div>");
-              closingSoonAdded = true;
-            }
-            messagesEl.innerHTML += reply;
+            messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
             chatBody.scrollTop = chatBody.scrollHeight;
-
-            localStorage.setItem("chatState", JSON.stringify({
-              agent: selectedAgent,
-              messages: messagesEl.innerHTML,
-              timestamp: Date.now()
-            }));
-          }, typingDuration);
-        }, delayBeforeTyping);
-      };
+          }, data.delay.typingTime);
+        }, data.delay.beforeTyping);
+      })
+      .catch(err => {
+        console.error("Chat backend error:", err);
+        typing.style.display = "none";
+        messagesEl.innerHTML += `<div><strong>Sistem:</strong> Şu anda yanıt verilemiyor.</div>`;
+      });
     }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      document.body.style.display = "block";
+      document.getElementById("chatContainer").style.display = "flex";
+
+      const sessionId = getSessionId();
+      fetch(`${backendURL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, message: "" })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("agentImage").src = data.agent.image;
+        document.getElementById("agentName").innerText = data.agent.name;
+
+        if (data.isOpen === false) {
+          document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
+          return;
+        }
+
+        const messagesEl = document.getElementById("chatMessages");
+        messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
+      })
+      .catch(err => console.error("Greeting error:", err));
+    });
   </script>
 </body>
 </html>
