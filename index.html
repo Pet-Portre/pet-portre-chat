@@ -24,7 +24,11 @@
     .chat-box { width: 360px; max-height: 560px; background-color: #f9f9f9; border-radius: 12px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; overflow: hidden; margin-top: 20px; }
     .chat-header { background-color: #4a90e2; color: white; padding: 12px 16px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
     .chat-header-left { display: flex; align-items: center; gap: 10px; }
-    .chat-header img.agent { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
+    .chat-header img.agent {
+      width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+      transition: opacity 0.5s ease;
+      opacity: 1;
+    }
     .chat-header img.logo { height: 46px; margin-right: 4px; }
     .chat-body { padding: 10px; height: 320px; overflow-y: auto; font-size: 16px; }
     .chat-footer { padding: 10px; display: flex; gap: 6px; border-top: 1px solid #ccc; }
@@ -87,11 +91,11 @@ if (window.self === window.top) {
   const SIX_HOURS = 21600000;
 
   function getSessionId() {
-    const storedId = localStorage.getItem("chatSessionId");
-    if (storedId) return storedId;
-    const newId = Math.random().toString(36).substring(7);
-    localStorage.setItem("chatSessionId", newId);
-    return newId;
+    return localStorage.getItem("chatSessionId") || null;
+  }
+
+  function setSessionId(id) {
+    localStorage.setItem("chatSessionId", id);
   }
 
   function saveChatState(agent, messagesHTML) {
@@ -102,9 +106,22 @@ if (window.self === window.top) {
     }));
   }
 
+  function clearChatState() {
+    localStorage.removeItem("chatState");
+    localStorage.removeItem("chatSessionId");
+    document.getElementById("chatMessages").innerHTML = "";
+  }
+
   function scrollToBottom() {
     const chatBody = document.getElementById("chatBody");
     chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function loadAgentImage(newSrc) {
+    const imgEl = document.getElementById("agentImage");
+    imgEl.style.opacity = 0;
+    imgEl.onload = () => imgEl.style.opacity = 1;
+    imgEl.src = newSrc;
   }
 
   window.handleKeyPress = function (event) {
@@ -114,14 +131,19 @@ if (window.self === window.top) {
   function sendMessage() {
     const input = document.getElementById("chatInput");
     const message = input.value.trim();
-    if (message === "") return;
+    if (!message) return;
 
     const messagesEl = document.getElementById("chatMessages");
     messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
     input.value = "";
     scrollToBottom();
 
-    const sessionId = getSessionId();
+    let sessionId = getSessionId();
+    if (!sessionId) {
+      sessionId = Math.random().toString(36).substring(7);
+      setSessionId(sessionId);
+    }
+
     const typing = document.getElementById("typingIndicator");
     typing.style.display = "none";
 
@@ -132,18 +154,24 @@ if (window.self === window.top) {
     })
     .then(res => res.json())
     .then(data => {
-      document.getElementById("agentImage").src = data.agent.img;
+      if (data.sessionId && data.sessionId !== sessionId) {
+        setSessionId(data.sessionId);
+        sessionId = data.sessionId;
+      }
+
       document.getElementById("agentName").innerText = data.agent.name;
+      loadAgentImage(data.agent.img);
 
       if (data.isOpen === false) {
-        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
+        document.getElementById("chatFooter").innerHTML =
+          `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
         saveChatState(data.agent, messagesEl.innerHTML);
         typing.style.display = "none";
         return;
       }
 
       setTimeout(() => {
-        typing.innerText = data.agent.name + " yazıyor...";
+        typing.innerText = `${data.agent.name} yazıyor...`;
         typing.style.display = "block";
         scrollToBottom();
 
@@ -168,14 +196,19 @@ if (window.self === window.top) {
 
     const stored = JSON.parse(localStorage.getItem("chatState"));
     if (stored && Date.now() - stored.timestamp < SIX_HOURS) {
-      document.getElementById("agentImage").src = stored.agent.img;
       document.getElementById("agentName").innerText = stored.agent.name;
+      loadAgentImage(stored.agent.img);
       document.getElementById("chatMessages").innerHTML = stored.messages;
       scrollToBottom();
-      return; // Skip init, we already have memory
+      return;
     }
 
-    const sessionId = getSessionId();
+    let sessionId = getSessionId();
+    if (!sessionId) {
+      sessionId = Math.random().toString(36).substring(7);
+      setSessionId(sessionId);
+    }
+
     fetch(`${backendURL}/init`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -183,11 +216,17 @@ if (window.self === window.top) {
     })
     .then(res => res.json())
     .then(data => {
-      document.getElementById("agentImage").src = data.agent.img;
+      if (data.sessionId && data.sessionId !== sessionId) {
+        setSessionId(data.sessionId);
+        sessionId = data.sessionId;
+      }
+
       document.getElementById("agentName").innerText = data.agent.name;
+      loadAgentImage(data.agent.img);
 
       if (data.isOpen === false) {
-        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
+        document.getElementById("chatFooter").innerHTML =
+          `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
         saveChatState(data.agent, "");
         return;
       }
@@ -203,4 +242,3 @@ if (window.self === window.top) {
 </script>
 </body>
 </html>
-
