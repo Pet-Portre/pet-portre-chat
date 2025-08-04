@@ -117,17 +117,6 @@
       border-top: 1px solid #ccc;
     }
 
-    /* Added for offline message styling */
-    .offline-message {
-      padding: 10px;
-      text-align: center;
-      color: #444;
-      font-size: 14px;
-      border-top: 1px solid #ccc;
-      background-color: #f1f1f1;
-      width: 100%;
-    }
-
     .chat-footer input {
       flex: 1;
       padding: 8px 12px;
@@ -285,13 +274,13 @@
       const nowDate = new Date();
       const stored = JSON.parse(localStorage.getItem("chatState")) || {};
 
-      // Force time for testing
+      // Force time to 22:46 for testing closing soon
       const day = nowDate.getDay();
-      const hour = 22; // simulate 22:45
-      const minute = 45;
+      const hour = 22;
+      const minute = 46;
 
-      // Force offline for testing
-      let isOpen = false;
+      // Force open for test
+      let isOpen = true;
 
       document.body.style.display = "block";
       document.getElementById("chatContainer").style.display = "flex";
@@ -352,8 +341,8 @@
         const chatBody = document.getElementById("chatBody");
         chatBody.scrollTop = chatBody.scrollHeight;
 
-        const delayBeforeTyping = 500; // fast for test
-        const typingDuration = 500; // fast for test
+        const delayBeforeTyping = 500; 
+        const typingDuration = 500; 
 
         setTimeout(() => {
           typing.innerText = selectedAgent.name + " yazıyor...";
