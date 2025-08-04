@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pet-Portre Canlı Destek</title>
 
-  <!-- ✅ Full favicon setup with SVG for Safari, Chrome, iOS -->
+  <!-- ✅ Full favicon setup -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="mask-icon" href="/favicon.svg" color="#4a90e2">
   <link rel="apple-touch-icon" href="/favicon.svg">
@@ -14,36 +14,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body { display: none; background: #ffffff; font-family: 'Arial', sans-serif; height: 100vh; overflow: hidden; }
-
     .wrapper { display: flex; width: 100%; height: 100%; }
     .side-panel { flex: 1.2; background-size: cover; background-position: center; }
     .left-panel { background-image: url('https://i.imgur.com/9PpOW4r.jpeg'); }
     .right-panel { background-image: url('https://i.imgur.com/YHBQc9r.jpeg'); }
-
     .center-panel { flex: 1.6; background: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .quote { font-family: 'Playfair Display', serif; font-style: italic; font-size: 14px; color: #444; text-align: center; margin-bottom: 16px; max-width: 90%; }
-
     .chat-box { width: 360px; max-height: 560px; background-color: #f9f9f9; border-radius: 12px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; overflow: hidden; margin-top: 20px; }
-
     .chat-header { background-color: #4a90e2; color: white; padding: 12px 16px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
     .chat-header-left { display: flex; align-items: center; gap: 10px; }
     .chat-header img.agent { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
     .chat-header img.logo { height: 46px; margin-right: 4px; }
-
     .chat-body { padding: 10px; height: 320px; overflow-y: auto; font-size: 16px; }
     .chat-footer { padding: 10px; display: flex; gap: 6px; border-top: 1px solid #ccc; }
     .offline-message { padding: 10px; text-align: center; color: #444; font-size: 14px; border-top: 1px solid #ccc; background-color: #f1f1f1; width: 100%; }
-
     .chat-footer input { flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid #ccc; font-size: 16px; }
     .chat-footer button { background-color: #4a90e2; color: white; border: none; border-radius: 20px; padding: 8px 14px; cursor: pointer; }
     .typing-indicator { font-style: italic; color: grey; margin-top: 5px; }
-
     .home-link { margin-bottom: 20px; font-size: 19px; color: #4a90e2; text-decoration: none; border: 2px solid #4a90e2; padding: 10px 22px; border-radius: 30px; transition: background 0.3s, color 0.3s; }
     .home-link:hover { background-color: #4a90e2; color: white; }
     .customer-message { color: #4a90e2; }
-
     @media (max-width: 900px) {
       .left-panel, .right-panel { display: none; }
       .center-panel { flex: 1; justify-content: flex-start; padding: 12px; }
@@ -90,97 +81,99 @@
     <div class="side-panel right-panel"></div>
   </div>
 
-  <script>
-    const backendURL = "https://pet-portre-chat-backend.vercel.app";
+<script>
+const backendURL = "https://pet-portre-chat-backend.vercel.app";
 
-    function getSessionId() {
-      const storedId = localStorage.getItem("chatSessionId");
-      if (storedId) return storedId;
-      const newId = Math.random().toString(36).substring(7);
-      localStorage.setItem("chatSessionId", newId);
-      return newId;
+function getSessionId() {
+  const storedId = localStorage.getItem("chatSessionId");
+  if (storedId) return storedId;
+  const newId = Math.random().toString(36).substring(7);
+  localStorage.setItem("chatSessionId", newId);
+  return newId;
+}
+
+window.handleKeyPress = function (event) {
+  if (event.key === "Enter") sendMessage();
+};
+
+function sendMessage() {
+  const input = document.getElementById("chatInput");
+  const message = input.value.trim();
+  if (message === "") return;
+
+  const messagesEl = document.getElementById("chatMessages");
+  messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
+  input.value = "";
+
+  const chatBody = document.getElementById("chatBody");
+  chatBody.scrollTop = chatBody.scrollHeight;
+
+  const sessionId = getSessionId();
+  const typing = document.getElementById("typingIndicator");
+  typing.style.display = "block";
+  typing.innerText = "Yazıyor...";
+
+  fetch(`${backendURL}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId, message })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("agentImage").src = data.agent.img;
+    document.getElementById("agentName").innerText = data.agent.name;
+
+    if (data.isOpen === false) {
+      document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
+      typing.style.display = "none";
+      return;
     }
 
-    window.handleKeyPress = function (event) {
-      if (event.key === "Enter") sendMessage();
-    };
-
-    function sendMessage() {
-      const input = document.getElementById("chatInput");
-      const message = input.value.trim();
-      if (message === "") return;
-
-      const messagesEl = document.getElementById("chatMessages");
-      messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
-      input.value = "";
-
-      const chatBody = document.getElementById("chatBody");
-      chatBody.scrollTop = chatBody.scrollHeight;
-
-      const sessionId = getSessionId();
-      const typing = document.getElementById("typingIndicator");
+    setTimeout(() => {
+      typing.innerText = data.agent.name + " yazıyor...";
       typing.style.display = "block";
-      typing.innerText = "Yazıyor...";
 
-      fetch(`${backendURL}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, message })
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("agentImage").src = data.agent.image;
-        document.getElementById("agentName").innerText = data.agent.name;
-
-        // If backend says closed
-        if (data.isOpen === false) {
-          document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
-          return;
-        }
-
-        setTimeout(() => {
-          typing.innerText = data.agent.name + " yazıyor...";
-          typing.style.display = "block";
-
-          setTimeout(() => {
-            typing.style.display = "none";
-            messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
-            chatBody.scrollTop = chatBody.scrollHeight;
-          }, data.delay.typingTime);
-        }, data.delay.beforeTyping);
-      })
-      .catch(err => {
-        console.error("Chat backend error:", err);
+      setTimeout(() => {
         typing.style.display = "none";
-        messagesEl.innerHTML += `<div><strong>Sistem:</strong> Şu anda yanıt verilemiyor.</div>`;
-      });
+        messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
+        chatBody.scrollTop = chatBody.scrollHeight;
+      }, data.delay.typingTime);
+    }, data.delay.beforeTyping);
+  })
+  .catch(err => {
+    console.error("Chat backend error:", err);
+    typing.style.display = "none";
+    messagesEl.innerHTML += `<div><strong>Sistem:</strong> Şu anda yanıt verilemiyor.</div>`;
+  });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  document.body.style.display = "block";
+  document.getElementById("chatContainer").style.display = "flex";
+
+  const sessionId = getSessionId();
+  fetch(`${backendURL}/init`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("agentImage").src = data.agent.img;
+    document.getElementById("agentName").innerText = data.agent.name;
+
+    if (data.isOpen === false) {
+      document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
+      return;
     }
 
-    window.addEventListener("DOMContentLoaded", () => {
-      document.body.style.display = "block";
-      document.getElementById("chatContainer").style.display = "flex";
-
-      const sessionId = getSessionId();
-      fetch(`${backendURL}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, message: "" })
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("agentImage").src = data.agent.image;
-        document.getElementById("agentName").innerText = data.agent.name;
-
-        if (data.isOpen === false) {
-          document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
-          return;
-        }
-
-        const messagesEl = document.getElementById("chatMessages");
-        messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
-      })
-      .catch(err => console.error("Greeting error:", err));
-    });
-  </script>
+    const messagesEl = document.getElementById("chatMessages");
+    messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
+  })
+  .catch(err => console.error("Init error:", err));
+});
+</script>
 </body>
 </html>
+
+
