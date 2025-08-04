@@ -24,7 +24,6 @@
     .chat-box { width: 360px; max-height: 560px; background-color: #f9f9f9; border-radius: 12px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; overflow: hidden; margin-top: 20px; }
     .chat-header { background-color: #4a90e2; color: white; padding: 12px 16px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
     .chat-header-left { display: flex; align-items: center; gap: 10px; }
-    /* Placeholder background for agent image */
     .chat-header img.agent {
       width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
       background: url('https://i.imgur.com/IwneVvu.jpeg') center center no-repeat;
@@ -128,6 +127,11 @@ if (window.self === window.top) {
   };
 
   function sendMessage() {
+    // Prevent sending if offline
+    if (document.getElementById("chatFooter").querySelector(".offline-message")) {
+      return;
+    }
+
     const input = document.getElementById("chatInput");
     const message = input.value.trim();
     if (message === "") return;
@@ -152,9 +156,11 @@ if (window.self === window.top) {
       loadAgentImage(data.agent.img);
 
       if (data.isOpen === false) {
-        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
-        saveChatState(data.agent, messagesEl.innerHTML);
-        typing.style.display = "none";
+        const chatFooter = document.getElementById("chatFooter");
+        chatFooter.innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
+        document.getElementById("agentName").innerText = "Canlı Destek Kapalı";
+        loadAgentImage("https://i.imgur.com/IwneVvu.jpeg");
+        document.getElementById("typingIndicator").style.display = "none";
         return;
       }
 
@@ -173,7 +179,8 @@ if (window.self === window.top) {
     })
     .catch(err => {
       console.error("Chat backend error:", err);
-      typing.style.display = "none";
+      document.getElementById("typingIndicator").style.display = "none";
+      const messagesEl = document.getElementById("chatMessages");
       messagesEl.innerHTML += `<div><strong>Sistem:</strong> Şu anda yanıt verilemiyor.</div>`;
     });
   }
@@ -199,14 +206,18 @@ if (window.self === window.top) {
     })
     .then(res => res.json())
     .then(data => {
-      document.getElementById("agentName").innerText = data.agent.name;
-      loadAgentImage(data.agent.img);
-
       if (data.isOpen === false) {
-        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
+        const chatFooter = document.getElementById("chatFooter");
+        chatFooter.innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
+        document.getElementById("agentName").innerText = "Canlı Destek Kapalı";
+        loadAgentImage("https://i.imgur.com/IwneVvu.jpeg");
+        document.getElementById("typingIndicator").style.display = "none";
         saveChatState(data.agent, "");
         return;
       }
+
+      document.getElementById("agentName").innerText = data.agent.name;
+      loadAgentImage(data.agent.img);
 
       const messagesEl = document.getElementById("chatMessages");
       messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
@@ -219,5 +230,3 @@ if (window.self === window.top) {
 </script>
 </body>
 </html>
-
-
