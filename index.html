@@ -117,6 +117,17 @@
       border-top: 1px solid #ccc;
     }
 
+    /* Added for offline message styling */
+    .offline-message {
+      padding: 10px;
+      text-align: center;
+      color: #444;
+      font-size: 14px;
+      border-top: 1px solid #ccc;
+      background-color: #f1f1f1;
+      width: 100%;
+    }
+
     .chat-footer input {
       flex: 1;
       padding: 8px 12px;
@@ -259,7 +270,7 @@
           <div id="chatMessages"></div>
           <div class="typing-indicator" id="typingIndicator" style="display:none;"></div>
         </div>
-        <div class="chat-footer">
+        <div class="chat-footer" id="chatFooter">
           <input type="text" id="chatInput" placeholder="Mesajınızı yazın..." onkeypress="handleKeyPress(event)" />
           <button onclick="sendMessage()">Gönder</button>
         </div>
@@ -271,8 +282,21 @@
   <script>
     if (window.self === window.top) {
       const SIX_HOURS = 21600000;
-      const now = Date.now();
+      const nowDate = new Date();
       const stored = JSON.parse(localStorage.getItem("chatState")) || {};
+
+      const day = nowDate.getDay(); // 0=Sun
+      const hour = nowDate.getHours();
+      const minute = nowDate.getMinutes();
+
+      let isOpen = false;
+      if (day >= 1 && day <= 5) { // Mon-Fri
+        if (hour > 7 && hour < 23) isOpen = true;
+        if (hour === 7 && minute >= 30) isOpen = true;
+      } else { // Sat-Sun
+        if (hour > 9 && hour < 23) isOpen = true;
+        if (hour === 9 && minute >= 0) isOpen = true;
+      }
 
       document.body.style.display = "block";
       document.getElementById("chatContainer").style.display = "flex";
@@ -291,7 +315,7 @@
       ];
 
       let selectedAgent;
-      if (stored.timestamp && now - stored.timestamp < SIX_HOURS) {
+      if (stored.timestamp && Date.now() - stored.timestamp < SIX_HOURS) {
         selectedAgent = stored.agent;
         document.getElementById("chatMessages").innerHTML = stored.messages || "";
       } else {
@@ -299,13 +323,22 @@
         localStorage.setItem("chatState", JSON.stringify({
           agent: selectedAgent,
           messages: `<div><strong>${selectedAgent.name}:</strong> ${selectedAgent.greeting}</div>`,
-          timestamp: now
+          timestamp: Date.now()
         }));
         document.getElementById("chatMessages").innerHTML = `<div><strong>${selectedAgent.name}:</strong> ${selectedAgent.greeting}</div>`;
       }
 
       document.getElementById("agentImage").src = selectedAgent.img;
       document.getElementById("agentName").innerText = selectedAgent.name;
+
+      if (!isOpen) {
+        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">
+          Şu anda canlı destek kapalıdır.<br>
+          <strong>Çalışma saatlerimiz:</strong> Pazartesi–Cuma 07:30 – 23:00, Cumartesi–Pazar 09:00 – 23:00
+        </div>`;
+      }
+
+      let closingSoonAdded = false;
 
       window.handleKeyPress = function (event) {
         if (event.key === "Enter") sendMessage();
@@ -334,7 +367,11 @@
 
           setTimeout(() => {
             typing.style.display = "none";
-            const reply = `<div><strong>${selectedAgent.name}:</strong> Harika bir seçim yapmanıza yardımcı olabilirim! 🐾</div>`;
+            let reply = `<div><strong>${selectedAgent.name}:</strong> Harika bir seçim yapmanıza yardımcı olabilirim! 🐾</div>`;
+            if (!closingSoonAdded && (hour > 22 || (hour === 22 && minute >= 40))) {
+              reply = reply.replace("</div>", " Bu arada, bilgilendirmek isterim ki canlı desteğimiz saat 23:00’te kapanacaktır.</div>");
+              closingSoonAdded = true;
+            }
             messagesEl.innerHTML += reply;
             chatBody.scrollTop = chatBody.scrollHeight;
 
