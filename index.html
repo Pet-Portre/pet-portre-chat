@@ -102,6 +102,11 @@ if (window.self === window.top) {
     }));
   }
 
+  function scrollToBottom() {
+    const chatBody = document.getElementById("chatBody");
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
   window.handleKeyPress = function (event) {
     if (event.key === "Enter") sendMessage();
   };
@@ -114,9 +119,7 @@ if (window.self === window.top) {
     const messagesEl = document.getElementById("chatMessages");
     messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
     input.value = "";
-
-    const chatBody = document.getElementById("chatBody");
-    chatBody.scrollTop = chatBody.scrollHeight;
+    scrollToBottom();
 
     const sessionId = getSessionId();
     const typing = document.getElementById("typingIndicator");
@@ -142,11 +145,12 @@ if (window.self === window.top) {
       setTimeout(() => {
         typing.innerText = data.agent.name + " yazıyor...";
         typing.style.display = "block";
+        scrollToBottom();
 
         setTimeout(() => {
           typing.style.display = "none";
           messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
-          chatBody.scrollTop = chatBody.scrollHeight;
+          scrollToBottom();
           saveChatState(data.agent, messagesEl.innerHTML);
         }, data.delay.typingTime);
       }, data.delay.beforeTyping);
@@ -167,6 +171,7 @@ if (window.self === window.top) {
       document.getElementById("agentImage").src = stored.agent.img;
       document.getElementById("agentName").innerText = stored.agent.name;
       document.getElementById("chatMessages").innerHTML = stored.messages;
+      scrollToBottom();
       return; // Skip init, we already have memory
     }
 
@@ -189,6 +194,7 @@ if (window.self === window.top) {
 
       const messagesEl = document.getElementById("chatMessages");
       messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
+      scrollToBottom();
       saveChatState(data.agent, messagesEl.innerHTML);
     })
     .catch(err => console.error("Init error:", err));
