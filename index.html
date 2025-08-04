@@ -11,6 +11,9 @@
   <link rel="apple-touch-icon" href="/favicon.svg">
   <link rel="shortcut icon" href="/favicon.svg">
 
+  <!-- Preload placeholder logo for instant load -->
+  <link rel="preload" as="image" href="https://i.imgur.com/IwneVvu.jpeg" />
+
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,8 +27,14 @@
     .chat-box { width: 360px; max-height: 560px; background-color: #f9f9f9; border-radius: 12px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; overflow: hidden; margin-top: 20px; }
     .chat-header { background-color: #4a90e2; color: white; padding: 12px 16px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
     .chat-header-left { display: flex; align-items: center; gap: 10px; }
-    .chat-header img.agent { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
-    .chat-header img.logo { height: 46px; margin-right: 4px; }
+    .chat-header img.agent {
+      width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+      transition: opacity 0.4s ease;
+      opacity: 1;
+    }
+    .chat-header img.logo {
+      height: 46px; margin-right: 4px;
+    }
     .chat-body { padding: 10px; height: 320px; overflow-y: auto; font-size: 16px; }
     .chat-footer { padding: 10px; display: flex; gap: 6px; border-top: 1px solid #ccc; }
     .offline-message { padding: 10px; text-align: center; color: #444; font-size: 14px; border-top: 1px solid #ccc; background-color: #f1f1f1; width: 100%; }
@@ -63,8 +72,9 @@
       <div class="chat-box" id="chatContainer" style="display: none;">
         <div class="chat-header">
           <div class="chat-header-left">
-            <img class="agent" id="agentImage" src="" alt="Agent" />
-            <span><span id="agentName"></span> – Canlı Destek</span>
+            <!-- Placeholder agent image initially set to logo -->
+            <img class="agent" id="agentImage" src="https://i.imgur.com/IwneVvu.jpeg" alt="Agent" style="opacity: 1;" />
+            <span><span id="agentName">Agent</span> – Canlı Destek</span>
           </div>
           <img class="logo" src="https://i.imgur.com/up4h6Nl.png" alt="Pet-Portre Logo" />
         </div>
@@ -107,6 +117,20 @@ if (window.self === window.top) {
     chatBody.scrollTop = chatBody.scrollHeight;
   }
 
+  // Helper to fade from placeholder logo to actual agent photo
+  function loadAgentPhoto(newSrc) {
+    const imgEl = document.getElementById("agentImage");
+    // Start fading out
+    imgEl.style.opacity = 0;
+    // When faded out, swap src and fade in
+    setTimeout(() => {
+      imgEl.src = newSrc;
+      imgEl.onload = () => {
+        imgEl.style.opacity = 1;
+      };
+    }, 400); // match CSS transition duration
+  }
+
   window.handleKeyPress = function (event) {
     if (event.key === "Enter") sendMessage();
   };
@@ -132,8 +156,8 @@ if (window.self === window.top) {
     })
     .then(res => res.json())
     .then(data => {
-      document.getElementById("agentImage").src = data.agent.img;
       document.getElementById("agentName").innerText = data.agent.name;
+      loadAgentPhoto(data.agent.img);
 
       if (data.isOpen === false) {
         document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
@@ -168,8 +192,8 @@ if (window.self === window.top) {
 
     const stored = JSON.parse(localStorage.getItem("chatState"));
     if (stored && Date.now() - stored.timestamp < SIX_HOURS) {
-      document.getElementById("agentImage").src = stored.agent.img;
       document.getElementById("agentName").innerText = stored.agent.name;
+      loadAgentPhoto(stored.agent.img);
       document.getElementById("chatMessages").innerHTML = stored.messages;
       scrollToBottom();
       return; // Skip init, we already have memory
@@ -183,8 +207,8 @@ if (window.self === window.top) {
     })
     .then(res => res.json())
     .then(data => {
-      document.getElementById("agentImage").src = data.agent.img;
       document.getElementById("agentName").innerText = data.agent.name;
+      loadAgentPhoto(data.agent.img);
 
       if (data.isOpen === false) {
         document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
