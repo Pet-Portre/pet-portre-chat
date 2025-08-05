@@ -160,6 +160,7 @@ if (window.self === window.top) {
     input.value = "";
     scrollToBottom();
 
+    const stored = JSON.parse(localStorage.getItem("chatState"));
     const sessionId = getSessionId();
     const typing = document.getElementById("typingIndicator");
     typing.style.display = "none";
@@ -167,7 +168,11 @@ if (window.self === window.top) {
     fetch(`${backendURL}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, message })
+      body: JSON.stringify({
+        sessionId,
+        preferredAgent: stored ? stored.agent : null,
+        message
+      })
     })
     .then(res => res.json())
     .then(data => {
@@ -205,18 +210,24 @@ if (window.self === window.top) {
     document.getElementById("chatContainer").style.display = "flex";
 
     const stored = JSON.parse(localStorage.getItem("chatState"));
-    if (stored && Date.now() - stored.timestamp < SIX_HOURS) {
+    const now = Date.now();
+    const validStored = stored && now - stored.timestamp < SIX_HOURS;
+
+    if (validStored) {
       updateAgentDetails(stored.agent.img, stored.agent.name);
       document.getElementById("chatMessages").innerHTML = stored.messages;
       scrollToBottom();
-      return;
     }
 
     const sessionId = getSessionId();
     fetch(`${backendURL}/init`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId })
+      body: JSON.stringify({
+        sessionId,
+        preferredAgent: validStored ? stored.agent : null,
+        hasChatHistory: validStored && stored.messages.trim() !== ""
+      })
     })
     .then(res => res.json())
     .then(data => {
@@ -228,10 +239,12 @@ if (window.self === window.top) {
         return;
       }
 
-      const messagesEl = document.getElementById("chatMessages");
-      messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
-      scrollToBottom();
-      saveChatState(data.agent, messagesEl.innerHTML);
+      if ((!validStored || !stored.messages || stored.messages.trim() === "") && data.greeting) {
+        const messagesEl = document.getElementById("chatMessages");
+        messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
+        scrollToBottom();
+        saveChatState(data.agent, messagesEl.innerHTML);
+      }
     })
     .catch(err => console.error("Init error:", err));
   });
