@@ -85,7 +85,6 @@
       <div class="chat-box" id="chatContainer" style="display: none;">
         <div class="chat-header">
           <div class="chat-header-left">
-            <!-- Skeleton visible instantly -->
             <img class="agent" id="agentImage" src="https://i.imgur.com/ZJ3HsgN.jpeg" alt="Agent" />
             <span><span id="agentName"></span> – Canlı Destek</span>
           </div>
@@ -130,20 +129,31 @@ if (window.self === window.top) {
     chatBody.scrollTop = chatBody.scrollHeight;
   }
 
+  // ✅ Fade only when agent changes
   function updateAgentDetails(imgSrc, name) {
     const img = document.getElementById("agentImage");
     const nameEl = document.getElementById("agentName");
+    const lastAgentName = localStorage.getItem("lastAgentName");
 
-    img.classList.remove("loaded");
-    nameEl.classList.remove("loaded");
-
-    img.onload = () => {
+    if (lastAgentName === name) {
+      img.src = imgSrc;
+      nameEl.textContent = name;
       img.classList.add("loaded");
       nameEl.classList.add("loaded");
-    };
+    } else {
+      img.classList.remove("loaded");
+      nameEl.classList.remove("loaded");
 
-    img.src = imgSrc;
-    nameEl.textContent = name;
+      img.onload = () => {
+        img.classList.add("loaded");
+        nameEl.classList.add("loaded");
+      };
+
+      img.src = imgSrc;
+      nameEl.textContent = name;
+    }
+
+    localStorage.setItem("lastAgentName", name);
   }
 
   window.handleKeyPress = function (event) {
