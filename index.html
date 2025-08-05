@@ -116,11 +116,12 @@ if (window.self === window.top) {
     return newId;
   }
 
-  function saveChatState(agent, messagesHTML) {
+  function saveChatState(agent, messagesHTML, closingSoonNotified) {
     localStorage.setItem("chatState", JSON.stringify({
       agent,
       messages: messagesHTML,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      closingSoonNotified: !!closingSoonNotified
     }));
   }
 
@@ -129,7 +130,6 @@ if (window.self === window.top) {
     chatBody.scrollTop = chatBody.scrollHeight;
   }
 
-  // ✅ Fade only when agent changes
   function updateAgentDetails(imgSrc, name) {
     const img = document.getElementById("agentImage");
     const nameEl = document.getElementById("agentName");
@@ -143,16 +143,13 @@ if (window.self === window.top) {
     } else {
       img.classList.remove("loaded");
       nameEl.classList.remove("loaded");
-
       img.onload = () => {
         img.classList.add("loaded");
         nameEl.classList.add("loaded");
       };
-
       img.src = imgSrc;
       nameEl.textContent = name;
     }
-
     localStorage.setItem("lastAgentName", name);
   }
 
@@ -165,12 +162,12 @@ if (window.self === window.top) {
     const message = input.value.trim();
     if (message === "") return;
 
+    const stored = JSON.parse(localStorage.getItem("chatState"));
     const messagesEl = document.getElementById("chatMessages");
     messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
     input.value = "";
     scrollToBottom();
 
-    const stored = JSON.parse(localStorage.getItem("chatState"));
     const sessionId = getSessionId();
     const typing = document.getElementById("typingIndicator");
     typing.style.display = "none";
@@ -181,7 +178,8 @@ if (window.self === window.top) {
       body: JSON.stringify({
         sessionId,
         preferredAgent: stored ? stored.agent : null,
-        message
+        message,
+        closingSoonNotified: stored ? stored.closingSoonNotified : false
       })
     })
     .then(res => res.json())
@@ -190,28 +188,32 @@ if (window.self === window.top) {
 
       if (data.isOpen === false) {
         document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
-        saveChatState(data.agent, messagesEl.innerHTML);
+        saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
         typing.style.display = "none";
         return;
+      }
+
+      if (data.message.includes("23:00’te kapanacaktır")) {
+        saveChatState(data.agent, messagesEl.innerHTML, true);
+      } else {
+        saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
       }
 
       setTimeout(() => {
         typing.innerText = data.agent.name + " yazıyor...";
         typing.style.display = "block";
         scrollToBottom();
-
         setTimeout(() => {
           typing.style.display = "none";
           messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
           scrollToBottom();
-          saveChatState(data.agent, messagesEl.innerHTML);
+          if (data.message.includes("23:00’te kapanacaktır")) {
+            saveChatState(data.agent, messagesEl.innerHTML, true);
+          } else {
+            saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
+          }
         }, data.delay.typingTime);
       }, data.delay.beforeTyping);
-    })
-    .catch(err => {
-      console.error("Chat backend error:", err);
-      typing.style.display = "none";
-      messagesEl.innerHTML += `<div><strong>Sistem:</strong> Şu anda yanıt verilemiyor.</div>`;
     });
   }
 
@@ -236,27 +238,29 @@ if (window.self === window.top) {
       body: JSON.stringify({
         sessionId,
         preferredAgent: validStored ? stored.agent : null,
-        hasChatHistory: validStored && stored.messages.trim() !== ""
+        hasChatHistory: validStored && stored.messages.trim() !== "",
+        closingSoonNotified: validStored ? stored.closingSoonNotified : false
       })
     })
     .then(res => res.json())
     .then(data => {
       updateAgentDetails(data.agent.img, data.agent.name);
-
       if (data.isOpen === false) {
         document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
-        saveChatState(data.agent, "");
+        saveChatState(data.agent, "", stored ? stored.closingSoonNotified : false);
         return;
       }
-
       if ((!validStored || !stored.messages || stored.messages.trim() === "") && data.greeting) {
         const messagesEl = document.getElementById("chatMessages");
         messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
         scrollToBottom();
-        saveChatState(data.agent, messagesEl.innerHTML);
+        if (data.greeting.includes("23:00’te kapanacaktır")) {
+          saveChatState(data.agent, messagesEl.innerHTML, true);
+        } else {
+          saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
+        }
       }
-    })
-    .catch(err => console.error("Init error:", err));
+    });
   });
 }
 </script>
