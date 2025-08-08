@@ -25,7 +25,7 @@
     .chat-header { background-color: #4a90e2; color: white; padding: 12px 16px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
     .chat-header-left { display: flex; align-items: center; gap: 10px; }
 
-    /* ✅ Skeleton + fade-in for image and name (1s) */
+    /* ✅ Transition reduced to 0.5s */
     .chat-header img.agent {
       width: 38px;
       height: 38px;
@@ -34,14 +34,14 @@
       background: url('https://i.imgur.com/ZJ3HsgN.jpeg') center center no-repeat;
       background-size: cover;
       opacity: 0;
-      transition: opacity 1s ease-in-out;
+      transition: opacity 0.5s ease-in-out;
     }
     .chat-header img.agent.loaded {
       opacity: 1;
     }
     #agentName {
       opacity: 0;
-      transition: opacity 1s ease-in-out;
+      transition: opacity 0.5s ease-in-out;
     }
     #agentName.loaded {
       opacity: 1;
@@ -57,6 +57,7 @@
     .home-link { margin-bottom: 20px; font-size: 19px; color: #4a90e2; text-decoration: none; border: 2px solid #4a90e2; padding: 10px 22px; border-radius: 30px; transition: background 0.3s, color 0.3s; }
     .home-link:hover { background-color: #4a90e2; color: white; }
     .customer-message { color: #4a90e2; }
+
     @media (max-width: 900px) {
       .left-panel, .right-panel { display: none; }
       .center-panel { flex: 1; justify-content: flex-start; padding: 12px; }
@@ -103,166 +104,164 @@
     <div class="side-panel right-panel"></div>
   </div>
 
-<script>
-if (window.self === window.top) {
-  const backendURL = "https://pet-portre-chat-backend.vercel.app";
-  const SIX_HOURS = 21600000;
+  <script>
+    const backendURL = "https://pet-portre-chat-backend.vercel.app";
+    const SIX_HOURS = 21600000;
 
-  function getSessionId() {
-    const storedId = localStorage.getItem("chatSessionId");
-    if (storedId) return storedId;
-    const newId = Math.random().toString(36).substring(7);
-    localStorage.setItem("chatSessionId", newId);
-    return newId;
-  }
+    function getSessionId() {
+      const storedId = localStorage.getItem("chatSessionId");
+      if (storedId) return storedId;
+      const newId = Math.random().toString(36).substring(7);
+      localStorage.setItem("chatSessionId", newId);
+      return newId;
+    }
 
-  function saveChatState(agent, messagesHTML, closingSoonNotified) {
-    localStorage.setItem("chatState", JSON.stringify({
-      agent,
-      messages: messagesHTML,
-      timestamp: Date.now(),
-      closingSoonNotified: !!closingSoonNotified
-    }));
-  }
+    function saveChatState(agent, messagesHTML, closingSoonNotified) {
+      localStorage.setItem("chatState", JSON.stringify({
+        agent,
+        messages: messagesHTML,
+        timestamp: Date.now(),
+        closingSoonNotified: !!closingSoonNotified
+      }));
+    }
 
-  function scrollToBottom() {
-    const chatBody = document.getElementById("chatBody");
-    chatBody.scrollTop = chatBody.scrollHeight;
-  }
+    function scrollToBottom() {
+      const chatBody = document.getElementById("chatBody");
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
 
-  function updateAgentDetails(imgSrc, name) {
-    const img = document.getElementById("agentImage");
-    const nameEl = document.getElementById("agentName");
-    const lastAgentName = localStorage.getItem("lastAgentName");
+    function updateAgentDetails(imgSrc, name) {
+      const img = document.getElementById("agentImage");
+      const nameEl = document.getElementById("agentName");
+      const lastAgentName = localStorage.getItem("lastAgentName");
 
-    if (lastAgentName === name) {
-      img.src = imgSrc;
-      nameEl.textContent = name;
-      img.classList.add("loaded");
-      nameEl.classList.add("loaded");
-    } else {
-      img.classList.remove("loaded");
-      nameEl.classList.remove("loaded");
-      img.onload = () => {
+      if (lastAgentName === name) {
+        img.src = imgSrc;
+        nameEl.textContent = name;
         img.classList.add("loaded");
         nameEl.classList.add("loaded");
-      };
-      img.src = imgSrc;
-      nameEl.textContent = name;
-    }
-    localStorage.setItem("lastAgentName", name);
-  }
-
-  window.handleKeyPress = function (event) {
-    if (event.key === "Enter") sendMessage();
-  };
-
-  function sendMessage() {
-    const input = document.getElementById("chatInput");
-    const message = input.value.trim();
-    if (message === "") return;
-
-    const stored = JSON.parse(localStorage.getItem("chatState"));
-    const messagesEl = document.getElementById("chatMessages");
-    messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
-    input.value = "";
-    scrollToBottom();
-
-    const sessionId = getSessionId();
-    const typing = document.getElementById("typingIndicator");
-    typing.style.display = "none";
-
-    fetch(`${backendURL}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId,
-        preferredAgent: stored ? stored.agent : null,
-        message,
-        closingSoonNotified: stored ? stored.closingSoonNotified : false
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      updateAgentDetails(data.agent.img, data.agent.name);
-
-      if (data.isOpen === false) {
-        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
-        saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
-        typing.style.display = "none";
-        return;
-      }
-
-      if (data.message.includes("23:00’te kapanacaktır")) {
-        saveChatState(data.agent, messagesEl.innerHTML, true);
       } else {
-        saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
+        img.classList.remove("loaded");
+        nameEl.classList.remove("loaded");
+        img.onload = () => {
+          img.classList.add("loaded");
+          nameEl.classList.add("loaded");
+        };
+        img.src = imgSrc;
+        nameEl.textContent = name;
       }
-
-      setTimeout(() => {
-        typing.innerText = data.agent.name + " yazıyor...";
-        typing.style.display = "block";
-        scrollToBottom();
-        setTimeout(() => {
-          typing.style.display = "none";
-          messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
-          scrollToBottom();
-          if (data.message.includes("23:00’te kapanacaktır")) {
-            saveChatState(data.agent, messagesEl.innerHTML, true);
-          } else {
-            saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
-          }
-        }, data.delay.typingTime);
-      }, data.delay.beforeTyping);
-    });
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    document.body.style.display = "block";
-    document.getElementById("chatContainer").style.display = "flex";
-
-    const stored = JSON.parse(localStorage.getItem("chatState"));
-    const now = Date.now();
-    const validStored = stored && now - stored.timestamp < SIX_HOURS;
-
-    if (validStored) {
-      updateAgentDetails(stored.agent.img, stored.agent.name);
-      document.getElementById("chatMessages").innerHTML = stored.messages;
-      scrollToBottom();
+      localStorage.setItem("lastAgentName", name);
     }
 
-    const sessionId = getSessionId();
-    fetch(`${backendURL}/init`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sessionId,
-        preferredAgent: validStored ? stored.agent : null,
-        hasChatHistory: validStored && stored.messages.trim() !== "",
-        closingSoonNotified: validStored ? stored.closingSoonNotified : false
+    window.handleKeyPress = function (event) {
+      if (event.key === "Enter") sendMessage();
+    };
+
+    function sendMessage() {
+      const input = document.getElementById("chatInput");
+      const message = input.value.trim();
+      if (message === "") return;
+
+      const stored = JSON.parse(localStorage.getItem("chatState"));
+      const messagesEl = document.getElementById("chatMessages");
+      messagesEl.innerHTML += `<div><strong class="customer-message">Siz:</strong> <span class="customer-message">${message}</span></div>`;
+      input.value = "";
+      scrollToBottom();
+
+      const sessionId = getSessionId();
+      const typing = document.getElementById("typingIndicator");
+      typing.style.display = "none";
+
+      fetch(`${backendURL}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          preferredAgent: stored ? stored.agent : null,
+          message,
+          closingSoonNotified: stored ? stored.closingSoonNotified : false
+        })
       })
-    })
-    .then(res => res.json())
-    .then(data => {
-      updateAgentDetails(data.agent.img, data.agent.name);
-      if (data.isOpen === false) {
-        document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
-        saveChatState(data.agent, "", stored ? stored.closingSoonNotified : false);
-        return;
-      }
-      if ((!validStored || !stored.messages || stored.messages.trim() === "") && data.greeting) {
-        const messagesEl = document.getElementById("chatMessages");
-        messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
-        scrollToBottom();
-        if (data.greeting.includes("23:00’te kapanacaktır")) {
+      .then(res => res.json())
+      .then(data => {
+        updateAgentDetails(data.agent.img, data.agent.name);
+
+        if (data.isOpen === false) {
+          document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.message.replace(/\n/g, "<br>")}</div>`;
+          saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
+          typing.style.display = "none";
+          return;
+        }
+
+        if (data.message.includes("23:00’te kapanacaktır")) {
           saveChatState(data.agent, messagesEl.innerHTML, true);
         } else {
           saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
         }
+
+        setTimeout(() => {
+          typing.innerText = data.agent.name + " yazıyor...";
+          typing.style.display = "block";
+          scrollToBottom();
+          setTimeout(() => {
+            typing.style.display = "none";
+            messagesEl.innerHTML += `<div><strong>${data.agent.name}:</strong> ${data.message}</div>`;
+            scrollToBottom();
+            if (data.message.includes("23:00’te kapanacaktır")) {
+              saveChatState(data.agent, messagesEl.innerHTML, true);
+            } else {
+              saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
+            }
+          }, data.delay.typingTime);
+        }, data.delay.beforeTyping);
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      document.body.style.display = "block";
+      document.getElementById("chatContainer").style.display = "flex";
+
+      const stored = JSON.parse(localStorage.getItem("chatState"));
+      const now = Date.now();
+      const validStored = stored && now - stored.timestamp < SIX_HOURS;
+
+      if (validStored) {
+        updateAgentDetails(stored.agent.img, stored.agent.name);
+        document.getElementById("chatMessages").innerHTML = stored.messages;
+        scrollToBottom();
       }
+
+      const sessionId = getSessionId();
+      fetch(`${backendURL}/init`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          preferredAgent: validStored ? stored.agent : null,
+          hasChatHistory: validStored && stored.messages.trim() !== "",
+          closingSoonNotified: validStored ? stored.closingSoonNotified : false
+        })
+      })
+      .then(res => res.json())
+      .then(data => {
+        updateAgentDetails(data.agent.img, data.agent.name);
+        if (data.isOpen === false) {
+          document.getElementById("chatFooter").innerHTML = `<div class="offline-message">${data.greeting.replace(/\n/g, "<br>")}</div>`;
+          saveChatState(data.agent, "", stored ? stored.closingSoonNotified : false);
+          return;
+        }
+        if ((!validStored || !stored.messages || stored.messages.trim() === "") && data.greeting) {
+          const messagesEl = document.getElementById("chatMessages");
+          messagesEl.innerHTML = `<div><strong>${data.agent.name}:</strong> ${data.greeting}</div>`;
+          scrollToBottom();
+          if (data.greeting.includes("23:00’te kapanacaktır")) {
+            saveChatState(data.agent, messagesEl.innerHTML, true);
+          } else {
+            saveChatState(data.agent, messagesEl.innerHTML, stored ? stored.closingSoonNotified : false);
+          }
+        }
+      });
     });
-  });
-}
-</script>
+  </script>
 </body>
 </html>
